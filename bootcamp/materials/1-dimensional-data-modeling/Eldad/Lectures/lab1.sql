@@ -1,54 +1,72 @@
--- Cumulative table generation query: Write a query that populates the actors table one year at a time.
+ CREATE TYPE season_stats AS (
+                         season Integer,
+                         pts REAL,
+                         ast REAL,
+                         reb REAL,
+                         weight INTEGER
+                       );
+ CREATE TYPE scoring_class AS
+     ENUM ('bad', 'average', 'good', 'star');
+
+
+ CREATE TABLE players (
+     player_name TEXT,
+     height TEXT,
+     college TEXT,
+     country TEXT,
+     draft_year TEXT,
+     draft_round TEXT,
+     draft_number TEXT,
+     seasons season_stats[],
+     scoring_class scoring_class,
+     is_active BOOLEAN,
+     current_season INTEGER,
+     PRIMARY KEY (player_name, current_season)
+ );
+
 
 WITH last_season AS (
-    SELECT * FROM actors
-    WHERE current_year = 1969
+    SELECT * FROM players
+    WHERE current_season = 1996
 
 ), this_season AS (
-     SELECT * FROM actor_films
-    WHERE year = 1970
+     SELECT * FROM player_seasons
+    WHERE season = 1997
 )
-INSERT INTO actors
-
+INSERT INTO players
 SELECT
-
-        COALESCE(ls.actor, ts.actor) as actor,
-        COALESCE(ls.actorid, ts.actorid) as actorid,
-        COALESCE(ls.film, ts.film) as film,
-        COALESCE(ls.year, ts.year) as year,
-        COALESCE(ls.votes, ts.votes) as votes,
-        COALESCE(ls.rating, ts.rating) as rating,
-        COALESCE(ls.filmid, ts.filmid) as filmid,
-
-        COALESCE(ls.films, ARRAY[]::films[]) ||
-            CASE WHEN ts.year IS NOT NULL THEN
+        COALESCE(ls.player_name, ts.player_name) as player_name,
+        COALESCE(ls.height, ts.height) as height,
+        COALESCE(ls.college, ts.college) as college,
+        COALESCE(ls.country, ts.country) as country,
+        COALESCE(ls.draft_year, ts.draft_year) as draft_year,
+        COALESCE(ls.draft_round, ts.draft_round) as draft_round,
+        COALESCE(ls.draft_number, ts.draft_number)
+            as draft_number,
+        COALESCE(ls.seasons,
+            ARRAY[]::season_stats[]
+            ) || CASE WHEN ts.season IS NOT NULL THEN
                 ARRAY[ROW(
-                ts.year,
-                ts.film,
-                ts.votes,
-                ts.rating, ts.filmid)::films]
-            ELSE ARRAY[]::films[] END as films,
-
-
-        CAST(
-            CASE
-                WHEN avg(ts.rating) over (partition by ts.actorid) > 8 THEN 'star'
-                WHEN avg(ts.rating) over (partition by ts.actorid) > 7 AND avg(ts.rating) over (partition by ts.actorid) <= 8 THEN 'good'
-                WHEN avg(ts.rating) over (partition by ts.actorid) > 6 AND avg(ts.rating) over (partition by ts.actorid) <= 7 THEN 'average'
-                WHEN avg(ts.rating) over (partition by ts.actorid) <= 6 THEN 'bad'
-            END AS quality_class
-        ),
-
-        CASE
-             when COUNT(ts.filmid) over (partition by ts.actorid) >= 1 then TRUE
-             else FALSE
-        END as is_active,
-
-         1970 AS current_year
+                ts.season,
+                ts.pts,
+                ts.ast,
+                ts.reb, ts.weight)::season_stats]
+                ELSE ARRAY[]::season_stats[] END
+            as seasons,
+         CASE
+             WHEN ts.season IS NOT NULL THEN
+                 (CASE WHEN ts.pts > 20 THEN 'star'
+                    WHEN ts.pts > 15 THEN 'good'
+                    WHEN ts.pts > 10 THEN 'average'
+                    ELSE 'bad' END)::scoring_class
+             ELSE ls.scoring_class
+         END as scoring_class,
+         ts.season IS NOT NULL as is_active,
+         1997 AS current_season
 
     FROM last_season ls
     FULL OUTER JOIN this_season ts
-    ON ls.film = ts.film
+    ON ls.player_name = ts.player_name
 
 
 
