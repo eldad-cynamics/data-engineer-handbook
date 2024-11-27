@@ -34,7 +34,6 @@ with_streaks AS (
 select actor,
     quality_class,
     is_active,
-    --streak_identifier,
     MIN(current_year) as start_season,
     MAX(current_year) as end_season
 from with_streaks
