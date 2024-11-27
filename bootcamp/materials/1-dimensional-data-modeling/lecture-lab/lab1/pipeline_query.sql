@@ -32,7 +32,7 @@ SELECT
                     WHEN ts.pts > 15 THEN 'good'
                     WHEN ts.pts > 10 THEN 'average'
                     ELSE 'bad' END)::scoring_class
-             ELSE ls.scorer_class
+             ELSE ls.scoring_class
          END as scoring_class,
          ts.season IS NOT NULL as is_active,
          1999 AS current_season
