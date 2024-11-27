@@ -14,7 +14,7 @@
 -- bad: Average rating ≤ 6.
 -- is_active: A BOOLEAN field that indicates whether an actor is currently active in the film industry (i.e., making films this year).
 
-CREATE TYPE films AS (
+CREATE TYPE films_array AS (
     year INTEGER,
     film TEXT,
     votes INTEGER,
@@ -25,17 +25,12 @@ CREATE TYPE films AS (
      ENUM ('bad', 'average', 'good', 'star');
 
 
- CREATE TABLE actors (
-     actor TEXT,
-     actorid TEXT,
-     film TEXT,
-     year INTEGER,
-     votes INTEGER,
-     rating REAL,
-     filmid TEXT,
-     films films[],
-     quality_class quality_class,
-     is_active BOOLEAN,
-     current_year INTEGER,
-     PRIMARY KEY (actor,film,current_year)
- );
+CREATE TABLE actors (
+                        actor TEXT,
+                        actorid TEXT,
+                        films films_array[],
+                        is_active BOOLEAN,
+                        current_year INTEGER,
+                        quality_class quality_class,
+                        PRIMARY KEY (actorid,current_year)
+);
